@@ -68,6 +68,12 @@ DAT.Globe = function (container, opts) {
     }
   };
 
+  var tooltipEnabledObjects = [];
+  var latestMouseProjection;
+  var hoveredObj;
+  var tooltipDisplayTimeout;
+  var raycaster = new THREE.Raycaster();
+
   var camera, scene, renderer, w, h;
   var mesh, atmosphere, point;
 
@@ -158,12 +164,21 @@ DAT.Globe = function (container, opts) {
 
     container.addEventListener('mouseover', function () {
       overRenderer = true;
+
     }, false);
+
+    container.addEventListener('mousemove', function () {
+      updateMouseCoords(event, mouse);
+      latestMouseProjection = undefined;
+      hoveredObj = undefined;
+      handleManipulationUpdate();
+    });
 
     container.addEventListener('mouseout', function () {
       overRenderer = false;
     }, false);
   }
+
 
   function addData(data, opts) {
     var lat, lng, size, color, i, step, colorFnWrapper;
@@ -241,6 +256,7 @@ DAT.Globe = function (container, opts) {
           morphTargets: true
         }));
       }
+      tooltipEnabledObjects.push(this.points);
       scene.add(this.points);
     }
   }
@@ -297,6 +313,34 @@ DAT.Globe = function (container, opts) {
 
     target.y = target.y > PI_HALF ? PI_HALF : target.y;
     target.y = target.y < - PI_HALF ? - PI_HALF : target.y;
+
+  }
+  function updateMouseCoords(event, coordsObj) {
+    coordsObj.x = ((event.clientX - renderer.domElement.offsetLeft + 0.5) / window.innerWidth) * 2 - 1;
+    coordsObj.y = -((event.clientY - renderer.domElement.offsetTop + 0.5) / window.innerHeight) * 2 + 1;
+  }
+
+  function handleManipulationUpdate() {
+    raycaster.setFromCamera(mouse, camera); {
+      var intersects = raycaster.intersectObjects(tooltipEnabledObjects);
+      if (intersects.length > 0) {
+        latestMouseProjection = intersects[0].point;
+        hoveredObj = intersects[0].object;
+      }
+    }
+
+    if (tooltipDisplayTimeout || !latestMouseProjection) {
+      clearTimeout(tooltipDisplayTimeout);
+      tooltipDisplayTimeout = undefined;
+      hideTooltip();
+    }
+
+    if (!tooltipDisplayTimeout && latestMouseProjection) {
+      tooltipDisplayTimeout = setTimeout(function () {
+        tooltipDisplayTimeout = undefined;
+        showTooltip();
+      }, 330);
+    }
   }
 
   function onMouseUp(event) {
@@ -365,6 +409,55 @@ DAT.Globe = function (container, opts) {
 
     renderer.render(scene, camera);
   }
+  function showTooltip() {
+    var divElement = $("#tooltip");
+
+    if (divElement && latestMouseProjection) {
+      divElement.css({
+        display: "block",
+        opacity: 1
+      });
+
+      var canvasHalfWidth = renderer.domElement.offsetWidth / 2;
+      var canvasHalfHeight = renderer.domElement.offsetHeight / 2;
+
+      var tooltipPosition = latestMouseProjection.clone().project(camera);
+      tooltipPosition.x = (tooltipPosition.x * canvasHalfWidth) + canvasHalfWidth + renderer.domElement.offsetLeft;
+      tooltipPosition.y = -(tooltipPosition.y * canvasHalfHeight) + canvasHalfHeight + renderer.domElement.offsetTop;
+
+      var tootipWidth = divElement[0].offsetWidth;
+      var tootipHeight = divElement[0].offsetHeight;
+
+      divElement.css({
+        left: `${tooltipPosition.x - tootipWidth / 2}px`,
+        top: `${tooltipPosition.y - tootipHeight - 5}px`
+      });
+
+      // var position = new THREE.Vector3();
+      // var quaternion = new THREE.Quaternion();
+      // var scale = new THREE.Vector3();
+      // hoveredObj.matrix.decompose(position, quaternion, scale);
+      // divElement.text(hoveredObj.userData.tooltipText);
+      divElement.text("Some user details...");
+
+      setTimeout(function () {
+        divElement.css({
+          opacity: 1.0
+        });
+      }, 25);
+    }
+  }
+
+  // This will immediately hide tooltip.
+  function hideTooltip() {
+    var divElement = $("#tooltip");
+    if (divElement) {
+      divElement.css({
+        display: "none"
+      });
+    }
+  }
+
 
   init();
   this.animate = animate;

@@ -101,6 +101,21 @@
       left: 20px;
       background: url(/globe/ce.png);
     }
+
+    #tooltip {
+      position: absolute;
+      display: none;
+      background-color: rgba(0, 0, 0, 0.8);
+      border: 2px solid #fff;
+      padding: 10px;
+      color: #fff;
+      font-size: 13px;
+      font-family: sans-serif;
+      font-weight: bold;
+      text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+      height: 200px;
+      width: 200px;
+    }
   </style>
 </head>
 
@@ -113,6 +128,7 @@
       class="bull">&bull;</span> Created by the Google Data Arts Team <span class="bull">&bull;</span> Data acquired
     from <a href="http://sedac.ciesin.columbia.edu/gpw/">SEDAC</a>
   </div>
+  <span id="tooltip" style="position: fixed;">aa</span>
 
   <div id="currentInfo">
     <span id="year1990" class="year">1990</span>
@@ -128,6 +144,7 @@
     <span>This is a Chrome Experiment</span>
   </a>
 
+  <script type="text/javascript" src="/globe/third-party/jquery.min.js"></script>
   <script type="text/javascript" src="/globe/third-party/Detector.js"></script>
   <script type="text/javascript" src="/globe/third-party/three.min.js"></script>
   <script type="text/javascript" src="/globe/third-party/Tween.js"></script>
@@ -191,7 +208,6 @@
     }
 
   </script>
-
 </body>
 
 </html>
